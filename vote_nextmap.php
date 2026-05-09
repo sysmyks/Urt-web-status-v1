@@ -58,34 +58,30 @@ if ($visitorIp && file_exists($config['web_linked_file'])) {
 
 // --- Si pas lié : générer un token et demander la liaison ---
 if ($linkedGuid === null) {
-    // Générer un token à 6 chiffres unique
     $token = null;
     $tokens = [];
     if (file_exists($config['web_tokens_file'])) {
         $tokens = json_decode(file_get_contents($config['web_tokens_file']), true) ?? [];
     }
-    // Nettoyer les tokens expirés
     $now = time();
     foreach ($tokens as $k => $v) {
         if ($v['expires'] < $now) {
             unset($tokens[$k]);
         }
     }
-    // Vérifier si un token non expiré existe déjà pour cette IP
     foreach ($tokens as $k => $v) {
         if ($v['ip'] === $visitorIp) {
             $token = $k;
             break;
         }
     }
-    // Sinon en créer un nouveau
     if ($token === null) {
         do {
             $token = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         } while (isset($tokens[$token]));
         $tokens[$token] = [
             'ip'      => $visitorIp,
-            'expires' => $now + 300, // 5 minutes
+            'expires' => $now + 300,
         ];
         file_put_contents($config['web_tokens_file'], json_encode($tokens), LOCK_EX);
     }
@@ -131,31 +127,23 @@ socket_set_option($socket, SOL_SOCKET, SO_SNDTIMEO, ['sec' => 2, 'usec' => 0]);
 
 $statusResponse = sendRcon($socket, $serverAddress, $serverPort, $rconPassword, 'status', true);
 
-// Chercher le slot du joueur par GUID dans le status
-// Format: "  0  200  45 PlayerName  0  1.2.3.4:27961  12345  25000"
-// Le GUID n'est pas dans le status RCON standard — on cherche par IP du joueur lié
-$playerSlot  = null;
+$playerSlot   = null;
 $fallbackSlot = null;
 if ($statusResponse) {
     $lines = explode("\n", $statusResponse);
     foreach ($lines as $line) {
         if (preg_match('/^\s*(\d+)\s+[-\d]+\s+\d+\s+\S.+?\s+(\d+\.\d+\.\d+\.\d+)(?::\d+)?/', $line, $m)) {
-            $slot      = (int)$m[1];
-            $playerIp  = $m[2];
+            $slot     = (int)$m[1];
+            $playerIp = $m[2];
             if ($fallbackSlot === null) {
                 $fallbackSlot = $slot;
             }
-            // Trouver le joueur dont l'IP correspond à celle enregistrée lors du !wt
-            // (c'est l'IP du serveur de jeu du joueur, pas forcément celle du site)
-            // On utilise l'IP du visiteur comme clé dans web_linked, donc on cherche aussi par IP de jeu
             if ($playerIp === $visitorIp) {
                 $playerSlot = $slot;
                 break;
             }
         }
     }
-    // Si l'IP de jeu ne correspond pas (NAT, VPN...), on utilise le fallback
-    // Le lien par GUID reste valide côté Spunkybot pour les bans, ici on fait de notre mieux
     if ($playerSlot === null) {
         $playerSlot = $fallbackSlot;
     }
@@ -167,7 +155,8 @@ if ($playerSlot === null) {
     exit;
 }
 
-$sent = sendRcon($socket, $serverAddress, $serverPort, $rconPassword, "spoof {$playerSlot} callvote map {$mapName}");
+// Commande nextmap au lieu de map
+$sent = sendRcon($socket, $serverAddress, $serverPort, $rconPassword, "spoof {$playerSlot} callvote nextmap {$mapName}");
 socket_close($socket);
 
 if ($sent === false) {
@@ -175,5 +164,4 @@ if ($sent === false) {
     exit;
 }
 
-echo json_encode(['success' => true, 'message' => "Vote lancé pour {$mapName} !"]);
-
+echo json_encode(['success' => true, 'message' => "Vote nextmap lancé pour {$mapName} !"]);

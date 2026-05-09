@@ -8,7 +8,9 @@ Displays server status, online players, available maps, and includes a full admi
 ## Features
 
 - **Server status** — online players, current map, scores, pings
-- **Map vote** — visitors can start a vote to change the map
+- **Map vote** — visitors can vote to change the current map or set the next map
+- **Next map vote** — visitors can also vote for the next map in rotation (separate button)
+- **Web account linking** — visitors get a one-time token, type `!wt <token>` in-game to link their account; once linked, votes are spoofed as their in-game slot via RCON
 - **Map gallery** — map list with images, details and jump records
 - **Admin panel** — password protected (bcrypt)
   - Online player list with kick / ban actions
@@ -155,7 +157,8 @@ status-v1/
 ├── index.php               ← Server status page
 ├── maps.php                ← Map gallery
 ├── map_details.php         ← Map detail page
-├── vote_map.php            ← Map vote AJAX endpoint
+├── vote_map.php            ← AJAX: vote to change current map
+├── vote_nextmap.php        ← AJAX: vote to set next map
 ├── lang_init.php           ← Language initialization
 └── generate_hash.php       ← Hash utility (delete after use)
 ```

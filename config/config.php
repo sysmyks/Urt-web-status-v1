@@ -11,6 +11,10 @@ return [
     'mapinfo_file' => '/home/urt/spunkybot-1.13.0/mod/mapinfo.json',
     'records_file' => '/home/urt/spunkybot-1.13.0/mod/jump_records.json',
 
+    // Système de liaison compte web ↔ joueur en jeu
+    'web_tokens_file' => '/home/urt/spunkybot-1.13.0/mod/web_tokens.json',
+    'web_linked_file'  => '/home/urt/spunkybot-1.13.0/mod/web_linked.json',
+
     // Base de données Spunkybot (SQLite)
     'spunky_sqlite' => '/home/urt/spunkybot-1.13.0/data.sqlite',
 

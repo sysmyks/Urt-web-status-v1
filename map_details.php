@@ -121,7 +121,31 @@ if (empty($mapInfo)) {
                         data-txt-sending="<?php echo htmlspecialchars($t['vote_sending']); ?>"
                         data-txt-sent="<?php echo htmlspecialchars($t['vote_sent']); ?>"
                         data-txt-network-error="<?php echo htmlspecialchars($t['vote_error_network']); ?>"
+                        data-txt-link-title="<?php echo htmlspecialchars($t['need_link_title']); ?>"
+                        data-txt-link-msg="<?php echo htmlspecialchars($t['need_link_msg']); ?>"
+                        data-txt-link-retry="<?php echo htmlspecialchars($t['need_link_retry']); ?>"
+                        data-txt-link-copied="<?php echo htmlspecialchars($t['need_link_copied']); ?>"
                     ><?php echo $t['vote_map']; ?></button>
+                    <button class="map-vote-btn map-vote-next-btn" id="voteNextBtn" data-mapname="<?php echo htmlspecialchars($mapName); ?>"
+                        data-txt-default="<?php echo htmlspecialchars($t['vote_nextmap']); ?>"
+                        data-txt-sending="<?php echo htmlspecialchars($t['vote_sending']); ?>"
+                        data-txt-sent="<?php echo htmlspecialchars($t['vote_sent']); ?>"
+                        data-txt-network-error="<?php echo htmlspecialchars($t['vote_error_network']); ?>"
+                        data-txt-link-title="<?php echo htmlspecialchars($t['need_link_title']); ?>"
+                        data-txt-link-msg="<?php echo htmlspecialchars($t['need_link_msg']); ?>"
+                        data-txt-link-retry="<?php echo htmlspecialchars($t['need_link_retry']); ?>"
+                        data-txt-link-copied="<?php echo htmlspecialchars($t['need_link_copied']); ?>"
+                    ><?php echo $t['vote_nextmap']; ?></button>
+                    <!-- Boîte de liaison compte -->
+                    <div id="linkBox" style="display:none;" class="link-box">
+                        <strong id="linkBoxTitle"></strong>
+                        <p id="linkBoxMsg"></p>
+                        <div class="link-command-wrap">
+                            <code id="linkCommand"></code>
+                            <button id="copyCmd" class="copy-btn">📋</button>
+                        </div>
+                        <button id="retryVoteBtn" class="map-vote-btn retry-btn"></button>
+                    </div>
                     <div class="info-section">
                         <h2><?php echo $t['info_section']; ?></h2>
                         <div class="info-grid">
@@ -196,49 +220,86 @@ if (empty($mapInfo)) {
     </div>
     
     <script>
-        // Vote map
-        const voteBtn = document.getElementById('voteBtn');
-        if (voteBtn) {
-            const txtDefault      = voteBtn.dataset.txtDefault;
-            const txtSending      = voteBtn.dataset.txtSending;
-            const txtSent         = voteBtn.dataset.txtSent;
-            const txtNetworkError = voteBtn.dataset.txtNetworkError;
+        // Fonction commune pour envoyer un vote map
+        function doVoteMap(mapName, button, endpoint) {
+            const txtDefault      = button.dataset.txtDefault;
+            const txtSending      = button.dataset.txtSending;
+            const txtSent         = button.dataset.txtSent;
+            const txtNetworkError = button.dataset.txtNetworkError;
+            const txtLinkTitle    = button.dataset.txtLinkTitle;
+            const txtLinkMsg      = button.dataset.txtLinkMsg;
+            const txtLinkRetry    = button.dataset.txtLinkRetry;
+            const txtLinkCopied   = button.dataset.txtLinkCopied;
 
-            voteBtn.addEventListener('click', function() {
-                const mapName = this.getAttribute('data-mapname');
-                const button = this;
-                button.disabled = true;
-                button.textContent = txtSending;
+            button.disabled = true;
+            button.textContent = txtSending;
 
-                const formData = new FormData();
-                formData.append('map', mapName);
+            const formData = new FormData();
+            formData.append('map', mapName);
 
-                fetch('vote_map.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        button.textContent = txtSent;
-                        button.classList.add('voted');
-                    } else {
-                        button.textContent = '❌ ' + data.message;
-                        button.disabled = false;
-                    }
+            fetch(endpoint, { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    button.textContent = txtSent;
+                    button.classList.add('voted');
+                    document.getElementById('linkBox').style.display = 'none';
                     setTimeout(() => {
                         button.textContent = txtDefault;
                         button.classList.remove('voted');
                         button.disabled = false;
                     }, 4000);
-                })
-                .catch(() => {
-                    button.textContent = txtNetworkError;
+                } else if (data.need_link) {
+                    // Afficher la boîte de liaison
+                    button.textContent = txtDefault;
+                    button.disabled = false;
+                    const box      = document.getElementById('linkBox');
+                    const cmd      = data.command;
+                    document.getElementById('linkBoxTitle').textContent = txtLinkTitle;
+                    document.getElementById('linkBoxMsg').textContent   = txtLinkMsg;
+                    document.getElementById('linkCommand').textContent  = cmd;
+                    const retryBtn = document.getElementById('retryVoteBtn');
+                    retryBtn.textContent = txtLinkRetry;
+                    retryBtn.onclick = function() {
+                        box.style.display = 'none';
+                        doVoteMap(mapName, button, endpoint);
+                    };
+                    // Copier la commande
+                    document.getElementById('copyCmd').onclick = function() {
+                        navigator.clipboard.writeText(cmd).then(() => {
+                            this.textContent = txtLinkCopied;
+                            setTimeout(() => { this.textContent = '📋'; }, 2000);
+                        });
+                    };
+                    box.style.display = 'block';
+                } else {
+                    button.textContent = '❌ ' + data.message;
                     button.disabled = false;
                     setTimeout(() => {
                         button.textContent = txtDefault;
-                    }, 3000);
-                });
+                    }, 4000);
+                }
+            })
+            .catch(() => {
+                button.textContent = txtNetworkError;
+                button.disabled = false;
+                setTimeout(() => { button.textContent = txtDefault; }, 3000);
+            });
+        }
+
+        // Vote map
+        const voteBtn = document.getElementById('voteBtn');
+        if (voteBtn) {
+            voteBtn.addEventListener('click', function() {
+                doVoteMap(this.getAttribute('data-mapname'), this, 'vote_map.php');
+            });
+        }
+
+        // Vote nextmap
+        const voteNextBtn = document.getElementById('voteNextBtn');
+        if (voteNextBtn) {
+            voteNextBtn.addEventListener('click', function() {
+                doVoteMap(this.getAttribute('data-mapname'), this, 'vote_nextmap.php');
             });
         }
 

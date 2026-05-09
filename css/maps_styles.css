@@ -144,6 +144,87 @@
     font-size: 1rem;
 }
 
+/* Réduire l'espace entre les deux boutons de vote */
+.map-detail-info #voteBtn {
+    margin-bottom: 0;
+}
+
+/* Bouton votenextmap - couleur bleue pour le distinguer */
+.map-vote-next-btn {
+    background-color: rgba(80, 150, 220, 0.1);
+    color: #5096dc;
+    border-color: rgba(80, 150, 220, 0.2);
+}
+
+.map-vote-next-btn:hover:not(:disabled) {
+    background-color: rgba(80, 150, 220, 0.25);
+}
+
+.map-vote-next-btn.voted {
+    background-color: rgba(80, 150, 220, 0.3);
+    border-color: rgba(80, 150, 220, 0.5);
+}
+
+/* Boîte de liaison compte web */
+.link-box {
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    background-color: rgba(255, 180, 50, 0.08);
+    border: 1px solid rgba(255, 180, 50, 0.3);
+    border-radius: 6px;
+    color: #f0c060;
+}
+
+.link-box strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 1rem;
+}
+
+.link-box p {
+    margin: 0 0 8px;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.link-command-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.link-command-wrap code {
+    flex: 1;
+    padding: 6px 10px;
+    background-color: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: #50c878;
+    font-family: monospace;
+}
+
+.copy-btn {
+    padding: 6px 10px;
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background-color 0.2s;
+}
+
+.copy-btn:hover {
+    background-color: #444;
+}
+
+.retry-btn {
+    width: 100%;
+    background-color: rgba(80, 200, 120, 0.12);
+}
+
 /* Search and filter */
 .maps-filter {
     margin-bottom: 20px;
